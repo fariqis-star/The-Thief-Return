@@ -23,6 +23,9 @@ namespace RunAndGun.Combat
         [Tooltip("Layers this bullet reacts to. Leave the Player layer OUT so it never hits its owner.")]
         [SerializeField] private LayerMask _hitLayers;
 
+        [Tooltip("How much damage this bullet deals to whatever it hits.")]
+        [SerializeField] private int _damage = 1;
+
         private Rigidbody2D _rigidbody;
         private float _despawnTime;
 
@@ -63,7 +66,10 @@ namespace RunAndGun.Combat
             // Ignore anything not on a layer we care about (e.g. the player, other bullets).
             if ((_hitLayers.value & (1 << other.gameObject.layer)) == 0) return;
 
-            // FUTURE: damage goes here once enemies/health exist. Intentionally left out for now.
+            // Deal damage if the thing we hit has a Health component.
+            // GetComponentInParent handles the case where the collider is on a child.
+            Health health = other.GetComponentInParent<Health>();
+            if (health != null) health.TakeDamage(_damage);
 
             Destroy(gameObject);
         }
