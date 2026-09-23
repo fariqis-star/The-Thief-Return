@@ -122,6 +122,11 @@ namespace RunAndGun.Enemy
             _rigidbody.linearVelocity = velocity;
         }
 
+        [Header("Aiming")]
+        [Tooltip("Dead zone (in units) around the enemy where it will NOT change facing. " +
+                 "Prevents the twitchy flip when the player is nearly directly above/below.")]
+        [SerializeField] private float _facingDeadZone = 0.2f;
+
         // ── Stop, face the player, and fire on the timer ─────────────────────
         private void ShootAtPlayer()
         {
@@ -130,14 +135,23 @@ namespace RunAndGun.Enemy
             velocity.x = 0f;
             _rigidbody.linearVelocity = velocity;
 
-            // Face toward the player.
-            int dirToPlayer = _player.position.x >= transform.position.x ? 1 : -1;
-            Face(dirToPlayer);
+            // How far (and which way) the player is from the enemy on X.
+            float xDiff = _player.position.x - transform.position.x;
 
-            // Fire if enough time has passed since the last shot.
+            // Only flip when the player is CLEARLY to one side. Inside the dead zone we
+            // keep the current facing, so the enemy no longer twitches / flips to the
+            // wrong side when the player is right next to or slightly past its center.
+            if (Mathf.Abs(xDiff) > _facingDeadZone)
+            {
+                int dirToPlayer = xDiff > 0f ? 1 : -1;
+                Face(dirToPlayer);
+            }
+
+            // Fire in whatever direction we are ACTUALLY facing, so the bullet and the
+            // sprite can never disagree.
             if (Time.time >= _nextFireTime)
             {
-                Fire(dirToPlayer);
+                Fire(_facing);
                 _nextFireTime = Time.time + 1f / Mathf.Max(_fireRate, 0.01f);
             }
         }
